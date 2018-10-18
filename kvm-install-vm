@@ -13,7 +13,7 @@ function usage {
     echo "  -d          Disk Size (GB)      (default: 10)"
     echo "  -t          Linux Distribution  (default: ubuntu16)"
     echo "  -l          Location of Images  (default: /var/lib/libvirt/images)"
-    echo "  -k          SSH Public Key      (default: $HOME/.ssh/id_ed25519.pub)"
+    echo "  -k          SSH Public Key      (default: $HOME/.ssh/id_rsa.pub)"
     echo "  -b          Bridge              (default: virbr0)"
     echo "  -h          Display help"
     echo "  -i          Custom QCOW2 Image"
@@ -27,6 +27,7 @@ function usage {
     echo " - debian8"
     echo " - debian9"
     echo " - ubuntu16"
+    echo " - ubuntu18"
     echo ""
     echo "EXAMPLES"
     echo ""
@@ -48,15 +49,16 @@ OPTIND=1
 # Override using command line arguments.
 #--------------------------------------------------
 
-CPUS=1                              # Number of virtual CPUs
-FEATURE=host                        # Use host cpu features to the guest
-MEMORY=1024                         # Amount of RAM in MB
-DISK_SIZE=5                         # Disk Size in GB
-RESIZE_DISK=false                   # Resize disk (boolean)
+CPUS=1                          # Number of virtual CPUs
+FEATURE=host                    # Use host cpu features to the guest
+MEMORY=1024                     # Amount of RAM in MB
+DISK_SIZE=5                     # Disk Size in GB
+RESIZE_DISK=false               # Resize disk (boolean)
 IMAGEDIR=/var/lib/libvirt/images    # Directory to store images
-BRIDGE=virbr0                       # Hypervisor bridge
-PUBKEY=${HOME}/.ssh/id_ed25519.pub  # SSH public key
-DISTRO=ubuntu16                     # Distribution
+BRIDGE=virbr0                   # Hypervisor bridge
+PUBKEY=${HOME}/.ssh/id_rsa.pub  # SSH public key
+#PUBKEY=/root/.ssh/id_ed25519_orson.pub
+DISTRO=ubuntu16                  # Distribution
 MACADDRESS=""
 
 #--------------------------------------------------
@@ -133,6 +135,7 @@ function fetch_images {
         debian8 ) QCOW=debian-8-openstack-amd64.qcow2 ;;
         debian9 ) QCOW=debian-9-openstack-amd64.qcow2 ;;
         ubuntu16) QCOW=ubuntu-16.04-server-cloudimg-amd64-disk1.img ;;
+        ubuntu18) QCOW=ubuntu-18.04-server-cloudimg-amd64.img ;;
         *       ) usage; exit 2 ;;
     esac
 
@@ -170,7 +173,7 @@ function fetch_images {
         fi
     elif [ "${DISTRO}" == "debian9" ]
     then
-        OS_VARIANT="debian9"
+        OS_VARIANT="debian8"
         DEBIAN8_URL=https://cdimage.debian.org/cdimage/openstack/current-9
         LOGIN_USER=debian
         if [ ! -f ${IMAGEDIR}/${QCOW} ]
@@ -187,6 +190,16 @@ function fetch_images {
         then
             echo "$(date -R) Cloud image not found.  Downloading..."
             wget -P ${IMAGEDIR} ${UBUNTU16_URL}/${QCOW}
+        fi
+    elif [ "${DISTRO}" == "ubuntu18" ]
+    then
+        OS_VARIANT="ubuntu16.04"
+        UBUNTU18_URL=https://cloud-images.ubuntu.com/releases/18.04/release/
+        LOGIN_USER=ubuntu
+        if [ ! -f ${IMAGEDIR}/${QCOW} ]
+        then
+            echo "$(date -R) Cloud image not found.  Downloading..."
+            wget -P ${IMAGEDIR} ${UBUNTU18_URL}/${QCOW}
         fi
     fi
 
